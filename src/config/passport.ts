@@ -1,7 +1,7 @@
-import passport from "passport";
-import passportGoogle from "passport-google-oauth20";
-import User from "../models/User";
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from "../utils/secrets";
+import passport from 'passport';
+import passportGoogle from 'passport-google-oauth20';
+import User from '../models/User';
+import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from '../utils/secrets';
 const GoogleStrategy = passportGoogle.Strategy;
 
 passport.serializeUser((user, done) => {
@@ -18,7 +18,7 @@ passport.use(
     {
       clientID: GOOGLE_CLIENT_ID,
       clientSecret: GOOGLE_CLIENT_SECRET,
-      callbackURL: "/auth/google/redirect",
+      callbackURL: '/auth/google/redirect',
     },
     async (accessToken, refreshToken, profile, done) => {
       const user = await User.findOne({ googleId: profile.id });

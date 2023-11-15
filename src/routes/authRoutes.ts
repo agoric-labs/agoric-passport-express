@@ -1,28 +1,28 @@
-import express from "express";
-import passport from "passport";
+import express from 'express';
+import passport from 'passport';
 const router = express.Router();
 
-router.get("/login", (req, res) => {
+router.get('/login', (req, res) => {
   if (req.user) {
-    res.redirect("/profile");
+    res.redirect('/profile');
   }
-  res.render("login");
+  res.render('login');
 });
 
-router.get("/logout", (req, res) => {
+router.get('/logout', (req, res) => {
   req.logout();
-  res.redirect("/");
+  res.redirect('/');
 });
 
 router.get(
-  "/google",
-  passport.authenticate("google", {
-    scope: ["email", "profile"],
+  '/google',
+  passport.authenticate('google', {
+    scope: ['email', 'profile'],
   })
 );
 
-router.get("/google/redirect", passport.authenticate("google"), (req, res) => {
-  res.redirect("/profile");
+router.get('/google/redirect', passport.authenticate('google'), (req, res) => {
+  res.redirect('/profile');
 });
 
 export default router;
