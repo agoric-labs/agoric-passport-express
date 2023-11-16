@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oauth App</title>
+  </head>
+
+  <body>
+    <fieldset>
+    <caption>
+        Agoric Identity
+    </caption>
+    <br />
+    <label> Chain ID: <input id="chainId" value="agoriclocal" /> </label>
+    <button id="connectWallet" type="button">Connect Keplr</button>
+    <br />
+    <label id="addrControl">
+        Address: <input id="address" readonly="true" />
+    </label>
+    <br />
+    <button id="signChallenge" type="button">Sign Binding</button>
+    </fieldset>
+
+    <script type="module">
+    const $ = id => document.getElementById(id);
+    const NonNullish = x => {
+        if (x === undefined || x === null) {
+        throw new Error('NonNullish');
+        }
+        return x;
+    };
+
+    const accountSetup = async keplr => {
+        if (!keplr) {
+        alert('Please install keplr extension');
+        return;
+        }
+        const elt = {
+        chainId: NonNullish($('chainId')),
+        addrControl: NonNullish($('addrControl')),
+        address: NonNullish($('address')),
+        };
+
+        const chainId = elt.chainId.value;
+        await window.keplr.enable(chainId);
+
+        const signer = window.keplr.getOfflineSigner(chainId);
+        const accounts = await signer.getAccounts();
+        console.log('@@@', { accounts });
+        const [{ address }] = accounts;
+        elt.address.value = address;
+    };
+
+    const signChallenge = async (keplr, nonce) => {
+        const elt = {
+        chainId: NonNullish($('chainId')),
+        address: NonNullish($('address')),
+        userName: "test",
+        id: "NonNullish($('id'))",
+        };
+
+        const claim = {
+        username: elt.userName.value,
+        id: elt.id.value,
+        nonce,
+        };
+        const sig = await keplr.signArbitrary(
+        elt.chainId.value,
+        elt.address.value,
+        JSON.stringify(claim),
+        );
+        console.log('sig', sig);
+
+        // const ok = await keplr.verifyArbitrary(
+        //   elt.chainId.value,
+        //   elt.address.value,
+        //   JSON.stringify(claim),
+        //   sig,
+        // );
+        // console.log('sig ok?', ok);
+    };
+
+    window.onload = async () => {
+        const elt = {
+        // login: NonNullish($('login')),
+        // userName: NonNullish($('userName')),
+        // id: NonNullish($('id')),
+        connect: NonNullish($('connectWallet')),
+        sign: NonNullish($('signChallenge')),
+        };
+
+        elt.connect.onclick = _ev => {
+        accountSetup(window.keplr);
+        };
+
+        elt.sign.onclick = _ev => {
+        signChallenge(window.keplr, Date.now());
+        };
+    };
+    </script>
+  </body>
+</html>

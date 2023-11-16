@@ -33,7 +33,7 @@ export const agoricWalletLink = (() => {
      * https://github.com/agoric-labs/dapp-game-places/pull/2/files#diff-dda050138732cca1a2c02c31a29e0301bc179de5769ea6475d9eb9a154dfc243
      *
      * The above example will need to be split up so that `signArbitrary`
-     * happens in the UI after it walls GET /wallet-link/challenge, then it
+     * happens in the UI after it calls GET /wallet-link/challenge, then it
      * calls POST /wallet-link/signed-challenge with the signed challenge.
      * Then, in this handler, call `verifyArbitrary` as seen in the example and
      * save req.user.walletAddress if verification is successfull.
