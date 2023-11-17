@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oauth App</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
   </head>
 
   <body>
@@ -54,32 +55,40 @@
     };
 
     const signChallenge = async (keplr, nonce) => {
-        const elt = {
+      const elt = {
         chainId: NonNullish($('chainId')),
         address: NonNullish($('address')),
-        userName: "test",
-        id: "NonNullish($('id'))",
-        };
-
-        const claim = {
-        username: elt.userName.value,
-        id: elt.id.value,
-        nonce,
-        };
-        const sig = await keplr.signArbitrary(
+      };
+      
+      const claim = {
+        challenge: "<%= user.walletChallenge %>",
+        username: "<%= user.username %>"
+      };
+      
+      const sig = await keplr.signArbitrary(
         elt.chainId.value,
         elt.address.value,
         JSON.stringify(claim),
-        );
-        console.log('sig', sig);
+      );
+      
+      console.log('sig', sig);
+      
+      // const ok = await keplr.verifyArbitrary(
+      //   elt.chainId.value,
+      //   elt.address.value,
+      //   JSON.stringify(claim),
+      //   sig,
+      // );
 
-        // const ok = await keplr.verifyArbitrary(
-        //   elt.chainId.value,
-        //   elt.address.value,
-        //   JSON.stringify(claim),
-        //   sig,
-        // );
-        // console.log('sig ok?', ok);
+      // console.log('sig ok?', ok);
+
+      $.ajax({
+        type: 'POST',
+        url: '/signed-challenge',
+        success: function(order) {
+          console.log("hit")
+        }
+      })
     };
 
     window.onload = async () => {

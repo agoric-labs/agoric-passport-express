@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Oauth App</title>
+  </head>
+
+  <body>
+    <script type="module">
+      const verifyChallenge = async (keplr, chainId, address, sig) => {
+        if (!keplr) {
+          alert('Please install keplr extension');
+          return;
+        }
+        await window.keplr.enable(chainId);
+        const claim = {
+          challenge: "<%= user.walletChallenge %>",
+          username: "<%= user.username %>",
+          address: address
+        };
+
+        const ok = await keplr.verifyArbitrary(
+          chainId,
+          address,
+          JSON.stringify(claim),
+          sig
+        );
+
+        console.log('sig ok?', ok);
+      };
+
+      window.onload = async () => {
+        signChallenge(window.keplr, "<%= info.chainId %>", "<%= info.address %>", "<%= info.signature %>");
+      }
+    </script>
+  </body>
+</html>

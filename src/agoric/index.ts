@@ -17,15 +17,18 @@ const randomString = (size = 21) =>
   randomBytes(size).toString('base64').slice(0, size);
 
 export const agoricWalletLink = (() => {
-  const getChallenge = (req: Request, res: Response) => {
+  const getChallenge = async (req: Request, res: Response) => {
     if (!req.user) {
       res.redirect('/auth/login');
     }
     req.user!.walletChallenge = randomString();
-    req.user!.save().then(user => res.send(user.walletChallenge));
+    await req.user!.save()
+
+    res.locals.user = req.user;
+    res.render('agoric', { user: req.user })    
   };
 
-  const submitSignedChallenge = (req: Request, res: Response) => {
+  const submitSignedChallenge = async (req: Request, res: Response) => {
     /**
      * TODO
      *
@@ -39,6 +42,17 @@ export const agoricWalletLink = (() => {
      * save req.user.walletAddress if verification is successfull.
      *
      * */
+
+    res.locals.user = req.user;
+    res.locals.info = {
+      chainId: req.body.chainId,
+      address: req.body.chainId,
+      signature: req.body.signature
+    }
+    res.render('walletVerify', { user: req.user });
+
+    req.user!.walletAddress = randomString();
+    
   };
 
   return { getChallenge, submitSignedChallenge };
