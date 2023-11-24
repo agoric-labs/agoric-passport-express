@@ -5,109 +5,94 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Oauth App</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+    <script
+      src="https://code.jquery.com/jquery-3.7.1.min.js"
+      integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+      crossorigin="anonymous"
+    ></script>
   </head>
 
   <body>
     <fieldset>
-    <caption>
+      <caption>
         Agoric Identity
-    </caption>
-    <br />
-    <label> Chain ID: <input id="chainId" value="agoriclocal" /> </label>
-    <button id="connectWallet" type="button">Connect Keplr</button>
-    <br />
-    <label id="addrControl">
+      </caption>
+      <br />
+      <label>
+        Chain ID: <input id="chainId" value="agoric-emerynet-8" />
+      </label>
+      <button id="connectWallet" type="button">Connect Keplr</button>
+      <br />
+      <label id="addrControl">
         Address: <input id="address" readonly="true" />
-    </label>
-    <br />
-    <button id="signChallenge" type="button">Sign Binding</button>
+      </label>
+      <br />
+      <button id="signChallenge" type="button">Sign Binding</button>
     </fieldset>
 
     <script type="module">
-    const $ = id => document.getElementById(id);
-    const NonNullish = x => {
-        if (x === undefined || x === null) {
-        throw new Error('NonNullish');
-        }
-        return x;
-    };
-
-    const accountSetup = async keplr => {
+      const accountSetup = async keplr => {
         if (!keplr) {
-        alert('Please install keplr extension');
-        return;
+          alert('Please install keplr extension');
+          return;
         }
         const elt = {
-        chainId: NonNullish($('chainId')),
-        addrControl: NonNullish($('addrControl')),
-        address: NonNullish($('address')),
+          chainId: $('#chainId'),
+          addrControl: $('#addrControl'),
+          address: $('#address'),
         };
 
-        const chainId = elt.chainId.value;
+        const chainId = elt.chainId.val();
         await window.keplr.enable(chainId);
 
         const signer = window.keplr.getOfflineSigner(chainId);
         const accounts = await signer.getAccounts();
-        console.log('@@@', { accounts });
+        console.log('accounts', { accounts });
         const [{ address }] = accounts;
-        elt.address.value = address;
-    };
-
-    const signChallenge = async (keplr, nonce) => {
-      const elt = {
-        chainId: NonNullish($('chainId')),
-        address: NonNullish($('address')),
+        elt.address.val(address);
       };
-      
-      const claim = {
-        challenge: "<%= user.walletChallenge %>",
-        username: "<%= user.username %>"
+
+      const signChallenge = async keplr => {
+        const address = $('#address').val();
+        const chainId = $('#chainId').val();
+
+        const sig = await keplr.signArbitrary(
+          chainId,
+          address,
+          JSON.stringify({
+            username: '<%= user.username %>',
+            challenge: '<%= user.walletChallenge %>',
+          })
+        );
+
+        console.log('signed challenge', sig);
+        $.ajax({
+          type: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          url: '/wallet-link/signed-challenge',
+          success: function (order) {
+            window.location.href = 'profile';
+          },
+          data: JSON.stringify({
+            chainId,
+            address,
+            signedChallenge: sig,
+          }),
+        });
       };
-      
-      const sig = await keplr.signArbitrary(
-        elt.chainId.value,
-        elt.address.value,
-        JSON.stringify(claim),
-      );
-      
-      console.log('sig', sig);
-      
-      // const ok = await keplr.verifyArbitrary(
-      //   elt.chainId.value,
-      //   elt.address.value,
-      //   JSON.stringify(claim),
-      //   sig,
-      // );
 
-      // console.log('sig ok?', ok);
-
-      $.ajax({
-        type: 'POST',
-        url: '/signed-challenge',
-        success: function(order) {
-          console.log("hit")
-        }
-      })
-    };
-
-    window.onload = async () => {
+      window.onload = async () => {
         const elt = {
-        // login: NonNullish($('login')),
-        // userName: NonNullish($('userName')),
-        // id: NonNullish($('id')),
-        connect: NonNullish($('connectWallet')),
-        sign: NonNullish($('signChallenge')),
+          connect: $('#connectWallet'),
+          sign: $('#signChallenge'),
         };
-
-        elt.connect.onclick = _ev => {
-        accountSetup(window.keplr);
-        };
-
-        elt.sign.onclick = _ev => {
-        signChallenge(window.keplr, Date.now());
-        };
-    };
+        elt.connect.on('click', _ev => {
+          accountSetup(window.keplr);
+        });
+        elt.sign.on('click', _ev => {
+          signChallenge(window.keplr);
+        });
+      };
     </script>
   </body>
 </html>

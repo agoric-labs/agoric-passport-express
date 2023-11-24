@@ -1,11 +1,12 @@
 import type { Request, Response, NextFunction } from 'express';
 import { randomBytes } from 'crypto';
 import { parseVstorage } from './vstorage';
+import { verifyADR36Amino } from '@keplr-wallet/cosmos';
 
 type Purse = {
   brand?: string;
   petname?: string;
-  balance: unknown;
+  balance: { brand: string; value: unknown };
   displayInfo: unknown;
 };
 
@@ -22,37 +23,40 @@ export const agoricWalletLink = (() => {
       res.redirect('/auth/login');
     }
     req.user!.walletChallenge = randomString();
-    await req.user!.save()
+    await req.user!.save();
 
     res.locals.user = req.user;
-    res.render('agoric', { user: req.user })    
+    res.render('agoric', { user: req.user });
   };
 
   const submitSignedChallenge = async (req: Request, res: Response) => {
-    /**
-     * TODO
-     *
-     * Example here
-     * https://github.com/agoric-labs/dapp-game-places/pull/2/files#diff-dda050138732cca1a2c02c31a29e0301bc179de5769ea6475d9eb9a154dfc243
-     *
-     * The above example will need to be split up so that `signArbitrary`
-     * happens in the UI after it calls GET /wallet-link/challenge, then it
-     * calls POST /wallet-link/signed-challenge with the signed challenge.
-     * Then, in this handler, call `verifyArbitrary` as seen in the example and
-     * save req.user.walletAddress if verification is successfull.
-     *
-     * */
-
-    res.locals.user = req.user;
-    res.locals.info = {
-      chainId: req.body.chainId,
-      address: req.body.chainId,
-      signature: req.body.signature
+    console.log('got request', req.body);
+    const challenge = req.user?.walletChallenge;
+    if (challenge === undefined) {
+      res
+        .status(400)
+        .send('No challenge registered on backend for this account');
+      return;
     }
-    res.render('walletVerify', { user: req.user });
 
-    req.user!.walletAddress = randomString();
-    
+    const {
+      address,
+      signedChallenge: { pub_key: pubKey, signature },
+    } = req.body;
+    const verified = verifyADR36Amino(
+      'agoric',
+      address,
+      JSON.stringify({ username: req.user!.username, challenge }),
+      Buffer.from(pubKey.value, 'base64'),
+      Buffer.from(signature, 'base64')
+    );
+    if (verified) {
+      req.user!.walletAddress = address;
+      await req.user!.save();
+      res.status(200).send(`Wallet successfully verified: ${address}`);
+      return;
+    }
+    res.status(400).send('Invalid signature, wallet could not be verified');
   };
 
   return { getChallenge, submitSignedChallenge };
@@ -63,7 +67,6 @@ export const agoricWalletPurses =
   (req: AgoricRequest, _res: Response, next: NextFunction) => {
     const address = req.user?.walletAddress;
     if (!address) {
-      console.log('empty address', address);
       next();
       return;
     }

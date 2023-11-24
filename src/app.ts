@@ -7,7 +7,7 @@ import walletLinkRoutes from './routes/walletLinkRoutes';
 import './config/passport';
 import cookieSession from 'cookie-session';
 import passport from 'passport';
-import { agoricWalletPurses } from './agoric';
+import { AgoricRequest, agoricWalletPurses } from './agoric';
 
 const app = express();
 
@@ -20,6 +20,7 @@ app.use(
   })
 );
 
+app.use(express.json());
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -27,13 +28,46 @@ mongoose.connect(MONGO_URI, () => {
   console.log('connected to mongodb');
 });
 
-app.use(agoricWalletPurses('https://agoric.api.kjnodes.com:443'));
+app.use(agoricWalletPurses('https://emerynet.api.agoric.net:443'));
 app.use('/wallet-link', walletLinkRoutes);
 app.use('/auth', authRoutes);
 app.use('/profile', profileRoutes);
 
 app.get('/', (req, res) => {
   res.render('home', { user: req.user });
+});
+
+app.get('/token-gated', (req: AgoricRequest, res) => {
+  console.log('User purses:', req.agoricPurses);
+  if (!req.agoricPurses) {
+    res
+      .status(400)
+      .send(
+        'Permission Denied: Link your wallet before accessing exclusive content.'
+      );
+    return;
+  }
+  const minimum = 10_000_000n;
+  const insufficientBalance = (balance: BigInt) => {
+    res
+      .status(400)
+      .send(
+        `Permission Denied: You need ${minimum} uIST to view this content. You only have ${balance}.`
+      );
+  };
+
+  const istPurse = req.agoricPurses?.find(({ petname }) => petname === 'IST');
+  if (!istPurse) {
+    return insufficientBalance(0n);
+  }
+
+  const istAmount = istPurse.balance.value;
+  if ((istAmount as bigint) < minimum) {
+    return insufficientBalance(istAmount as BigInt);
+  }
+  res.send(
+    'Congrats! You have enough IST to access exclusive content (っ◕‿◕)っ'
+  );
 });
 
 app.listen(PORT, () => {

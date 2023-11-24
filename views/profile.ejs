@@ -12,10 +12,19 @@
     <% if (user) { %>
     <h3>Username : <%= user.username %></h3>
     <h3>Email : <%= user.email %></h3>
-    <h3>Wallet Address : <%= user.walletAddress %></h3>
-    <a href="/wallet-link">Link to Agoric wallet</a>
-    <a href="/">Homepage</a>
-    <a href="/auth/logout">Logout</a>
+    <h3>Wallet Address : <%= user.walletAddress || 'No wallet linked' %></h3>
+    <div>
+      <a href="/wallet-link">Link to Agoric wallet</a>
+    </div>
+    <div>
+      <a href="/">Homepage</a>
+    </div>
+    <div>
+      <a href="/auth/logout">Logout</a>
+    </div>
+    <div>
+      <a href="/token-gated">Exclusive Content</a>
+    </div>
     <% } %>
   </body>
 </html>

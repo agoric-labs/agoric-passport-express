@@ -10,7 +10,7 @@ router.get('/login', (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  req.logout();
+  req.logout({}, () => {});
   res.redirect('/');
 });
 

@@ -104,10 +104,17 @@ const Far = (iface: any, methods: any) => {
   return methods;
 };
 
-export const parseVstorage = (res: { value: string }) => {
+export const parseVstorage = (res: {
+  value: string | { values: string; blockheight: string };
+}) => {
   const marshal = makeMarshal(undefined);
   const { value } = res;
-  const parsedValue = JSON.parse(value);
+  const valueToParse =
+    typeof value === 'string'
+      ? value
+      : value.values.at(value.values.length - 1);
+  if (!valueToParse) return null;
+  const parsedValue = JSON.parse(valueToParse!);
   const latestValueStr =
     'values' in parsedValue
       ? parsedValue.values[parsedValue.values.length - 1]
