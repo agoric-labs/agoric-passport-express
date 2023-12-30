@@ -54,13 +54,13 @@ passport.use(
     async (accessToken, refreshToken, profile, done) => {
       console.log('discord profile', profile);
 
-      const user = await User.findOne({ discordeId: profile.id });
+      const user = await User.findOne({ discordId: profile.id });
 
       // If user doesn't exist creates a new user. (similar to sign up)
       if (!user) {
         const newUser = await User.create({
           provider: 'discord',
-          discordeId: profile.id,
+          discordId: profile.id,
           avatar: profile.avatar,
           username: profile.username,
           fetchedAt: profile.fetchedAt,
