@@ -10,7 +10,8 @@ router.get('/login', (req, res) => {
 });
 
 router.get('/logout', (req, res) => {
-  req.logout({}, () => {});
+  // req.logout({}, () => {});
+  req.logout(() => {});
   res.redirect('/');
 });
 
@@ -21,8 +22,23 @@ router.get(
   })
 );
 
+router.get(
+  '/discord',
+  passport.authenticate('discord', {
+    scope: ['identify', 'guilds'],
+  })
+);
+
 router.get('/google/redirect', passport.authenticate('google'), (req, res) => {
   res.redirect('/profile');
 });
+
+router.get(
+  '/discord/redirect',
+  passport.authenticate('discord'),
+  (req, res) => {
+    res.redirect('/profile');
+  }
+);
 
 export default router;

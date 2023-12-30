@@ -1,0 +1,24 @@
+# based on https://github.com/Agoric/testnet-notes/blob/main/subm/app.yaml
+# ref: https://cloud.google.com/appengine/docs/standard/reference/app-yaml?tab=python#example
+
+runtime: nodejs18
+
+instance_class: F2
+
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
+
+includes:
+  # ack: https://stackoverflow.com/a/54055525/7963
+  - env-credentials.yml
+# env_variables:
+#   DISCORD_CLIENT_ID: ...
+#   DISCORD_CLIENT_SECRET: ...
+
+#   COOKIE_KEY: ...
+
+#   MONGO_PROD: 'mongodb+srv://...'
+#   NODE_ENV: production

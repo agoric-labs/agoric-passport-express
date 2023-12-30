@@ -1,7 +1,9 @@
 import passport from 'passport';
 import passportGoogle from 'passport-google-oauth20';
+import { Strategy as DiscordStrategy } from 'passport-discord';
 import User from '../models/User';
 import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from '../utils/secrets';
+import { DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET } from '../utils/secrets';
 const GoogleStrategy = passportGoogle.Strategy;
 
 passport.serializeUser((user, done) => {
@@ -26,10 +28,54 @@ passport.use(
       // If user doesn't exist creates a new user. (similar to sign up)
       if (!user) {
         const newUser = await User.create({
+          provider: 'google',
           googleId: profile.id,
           username: profile.displayName,
           email: profile.emails?.[0].value,
         });
+        if (newUser) {
+          done(null, newUser);
+        }
+      } else {
+        done(null, user);
+      }
+    }
+  )
+);
+
+const REGION_ID = 'uc'; // console shows: Region: us-central
+// https://cloud.google.com/appengine/docs/flexible/nodejs/runtime#environment_variables
+const { GOOGLE_CLOUD_PROJECT: PROJECT_ID } = process.env;
+const infra = PROJECT_ID
+  ? `https://${PROJECT_ID}.${REGION_ID}.r.appspot.com/`
+  : '';
+const callbackURL = `${infra}/auth/discord/redirect`;
+console.log({ callbackURL });
+
+passport.use(
+  new DiscordStrategy(
+    {
+      clientID: DISCORD_CLIENT_ID,
+      clientSecret: DISCORD_CLIENT_SECRET,
+      // callbackURL: '/auth/discord/redirect',
+      callbackURL,
+      scope: ['identify', 'guilds'],
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      console.log('discord profile', profile);
+
+      const user = await User.findOne({ discordId: profile.id });
+
+      // If user doesn't exist creates a new user. (similar to sign up)
+      if (!user) {
+        const newUser = await User.create({
+          provider: 'discord',
+          discordId: profile.id,
+          avatar: profile.avatar,
+          username: profile.username,
+          fetchedAt: profile.fetchedAt,
+        });
+        console.log('@@@', { newUser });
         if (newUser) {
           done(null, newUser);
         }
