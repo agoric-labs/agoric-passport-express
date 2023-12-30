@@ -43,12 +43,22 @@ passport.use(
   )
 );
 
+const REGION_ID = 'uc'; // console shows: Region: us-central
+// https://cloud.google.com/appengine/docs/flexible/nodejs/runtime#environment_variables
+const { GOOGLE_CLOUD_PROJECT: PROJECT_ID } = process.env;
+const infra = PROJECT_ID
+  ? `https://${PROJECT_ID}.${REGION_ID}.r.appspot.com/`
+  : '';
+const callbackURL = `${infra}/auth/discord/redirect`;
+console.log({ callbackURL });
+
 passport.use(
   new DiscordStrategy(
     {
       clientID: DISCORD_CLIENT_ID,
       clientSecret: DISCORD_CLIENT_SECRET,
-      callbackURL: '/auth/discord/redirect',
+      // callbackURL: '/auth/discord/redirect',
+      callbackURL,
       scope: ['identify', 'guilds'],
     },
     async (accessToken, refreshToken, profile, done) => {
